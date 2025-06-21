@@ -7,7 +7,7 @@ option go_package = "dbskiy.sso.v1;ssov1";
 service Auth {
   rpc Register (RegisterRequest) returns (RegisterResponse);
   rpc Login (LoginRequest) returns (LoginResponse);
-  rpc IsAdmin (IsAdminRequest) returns (IsAdminResponse);
+  rpc UserRole (UserRoleRequest) returns (UserRoleResponse);
 }
 
 message RegisterRequest {
@@ -29,10 +29,11 @@ message LoginResponse {
   string token = 1;
 }
 
-message IsAdminRequest {
+message UserRoleRequest {
   int64 user_id = 1;
+  int32 role_id = 2;
 }
 
-message IsAdminResponse {
-  bool is_admin = 1;
+message UserRoleResponse {
+  string role = 1;
 }
