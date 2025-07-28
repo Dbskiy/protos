@@ -7,20 +7,11 @@ option go_package = "dbskiy.sso.v1;ssov1";
 service Auth {
   rpc Register (RegisterRequest) returns (RegisterResponse);
   rpc Login (LoginRequest) returns (LoginResponse);
+  rpc Logout (LogoutRequest) returns (LogoutResponse);
+  rpc RenewAccessToken (RenewAccessTokenRequest) returns (RenewAccessTokenResponse);
 }
 
-//service Permissions {
-//  rpc UserPermissions(UserPermissionsRequest) returns (UserPermissionsResponse);
-//}
-
-service UserInfo {
-  rpc GetUserRole (GetUserRoleRequest) returns (GetUserRoleResponse);
-  rpc SetUserRole(SetUserRoleRequest) returns (SetUserRoleResponse);
-  //TODO: GetUserInfo
-  //TODO: GetUsersInfo
-  //TODO: DeleteUser
-  //TODO: получение информации о пользователях, пользователе для будущей панели админа, удаление пользователя
-}
+//TODO: получение информации о пользователях, пользователе для будущей панели админа, удаление пользователя
 
 message RegisterRequest {
   string email = 1;
@@ -38,33 +29,23 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string token = 1;
+  string access_token = 1;
+  string refresh_token = 2;
 }
 
-//message UserPermissionsRequest {
-//  int64 user_id = 1;
-//}
-//message UserPermissionsResponse {
-//  repeated string permissions = 1;
-//}
-
-message GetUserRoleRequest {
-  int64 requester_id = 1;
-  int64 user_id = 2;
+message LogoutRequest {
+  string refresh_token = 1;
 }
 
-message GetUserRoleResponse {
-  string role_id = 1;
-  string role_name = 2;
+
+message LogoutResponse {
+  bool succeeded = 1;
 }
 
-message SetUserRoleRequest {
-  int64 requester_id = 1;
-  //добавить при необходимости id пользователя, который пытается поменять роль
-  int64 user_id = 2; // id пользователя, роль которого меняют
-  int32 role_id = 3;
+message RenewAccessTokenRequest {
+  string refresh_token = 1;
 }
 
-message SetUserRoleResponse {
-  string status = 1;
+message RenewAccessTokenResponse {
+  string access_token = 1;
 }

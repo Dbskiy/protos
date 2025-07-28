@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_Register_FullMethodName = "/auth.Auth/Register"
-	Auth_Login_FullMethodName    = "/auth.Auth/Login"
+	Auth_Register_FullMethodName         = "/auth.Auth/Register"
+	Auth_Login_FullMethodName            = "/auth.Auth/Login"
+	Auth_Logout_FullMethodName           = "/auth.Auth/Logout"
+	Auth_RenewAccessToken_FullMethodName = "/auth.Auth/RenewAccessToken"
 )
 
 // AuthClient is the client API for Auth service.
@@ -29,6 +31,8 @@ const (
 type AuthClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	RenewAccessToken(ctx context.Context, in *RenewAccessTokenRequest, opts ...grpc.CallOption) (*RenewAccessTokenResponse, error)
 }
 
 type authClient struct {
@@ -59,12 +63,34 @@ func (c *authClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.C
 	return out, nil
 }
 
+func (c *authClient) Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogoutResponse)
+	err := c.cc.Invoke(ctx, Auth_Logout_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) RenewAccessToken(ctx context.Context, in *RenewAccessTokenRequest, opts ...grpc.CallOption) (*RenewAccessTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RenewAccessTokenResponse)
+	err := c.cc.Invoke(ctx, Auth_RenewAccessToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility.
 type AuthServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
+	RenewAccessToken(context.Context, *RenewAccessTokenRequest) (*RenewAccessTokenResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -80,6 +106,12 @@ func (UnimplementedAuthServer) Register(context.Context, *RegisterRequest) (*Reg
 }
 func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedAuthServer) RenewAccessToken(context.Context, *RenewAccessTokenRequest) (*RenewAccessTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RenewAccessToken not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 func (UnimplementedAuthServer) testEmbeddedByValue()              {}
@@ -138,6 +170,42 @@ func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogoutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).Logout(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_Logout_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).Logout(ctx, req.(*LogoutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_RenewAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RenewAccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).RenewAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_RenewAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).RenewAccessToken(ctx, req.(*RenewAccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -153,145 +221,13 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Login",
 			Handler:    _Auth_Login_Handler,
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "sso/sso.proto",
-}
-
-const (
-	UserInfo_GetUserRole_FullMethodName = "/auth.UserInfo/GetUserRole"
-	UserInfo_SetUserRole_FullMethodName = "/auth.UserInfo/SetUserRole"
-)
-
-// UserInfoClient is the client API for UserInfo service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UserInfoClient interface {
-	GetUserRole(ctx context.Context, in *GetUserRoleRequest, opts ...grpc.CallOption) (*GetUserRoleResponse, error)
-	SetUserRole(ctx context.Context, in *SetUserRoleRequest, opts ...grpc.CallOption) (*SetUserRoleResponse, error)
-}
-
-type userInfoClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewUserInfoClient(cc grpc.ClientConnInterface) UserInfoClient {
-	return &userInfoClient{cc}
-}
-
-func (c *userInfoClient) GetUserRole(ctx context.Context, in *GetUserRoleRequest, opts ...grpc.CallOption) (*GetUserRoleResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserRoleResponse)
-	err := c.cc.Invoke(ctx, UserInfo_GetUserRole_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userInfoClient) SetUserRole(ctx context.Context, in *SetUserRoleRequest, opts ...grpc.CallOption) (*SetUserRoleResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetUserRoleResponse)
-	err := c.cc.Invoke(ctx, UserInfo_SetUserRole_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// UserInfoServer is the server API for UserInfo service.
-// All implementations must embed UnimplementedUserInfoServer
-// for forward compatibility.
-type UserInfoServer interface {
-	GetUserRole(context.Context, *GetUserRoleRequest) (*GetUserRoleResponse, error)
-	SetUserRole(context.Context, *SetUserRoleRequest) (*SetUserRoleResponse, error)
-	mustEmbedUnimplementedUserInfoServer()
-}
-
-// UnimplementedUserInfoServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedUserInfoServer struct{}
-
-func (UnimplementedUserInfoServer) GetUserRole(context.Context, *GetUserRoleRequest) (*GetUserRoleResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserRole not implemented")
-}
-func (UnimplementedUserInfoServer) SetUserRole(context.Context, *SetUserRoleRequest) (*SetUserRoleResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetUserRole not implemented")
-}
-func (UnimplementedUserInfoServer) mustEmbedUnimplementedUserInfoServer() {}
-func (UnimplementedUserInfoServer) testEmbeddedByValue()                  {}
-
-// UnsafeUserInfoServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserInfoServer will
-// result in compilation errors.
-type UnsafeUserInfoServer interface {
-	mustEmbedUnimplementedUserInfoServer()
-}
-
-func RegisterUserInfoServer(s grpc.ServiceRegistrar, srv UserInfoServer) {
-	// If the following call pancis, it indicates UnimplementedUserInfoServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&UserInfo_ServiceDesc, srv)
-}
-
-func _UserInfo_GetUserRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserInfoServer).GetUserRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserInfo_GetUserRole_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserInfoServer).GetUserRole(ctx, req.(*GetUserRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserInfo_SetUserRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetUserRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserInfoServer).SetUserRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserInfo_SetUserRole_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserInfoServer).SetUserRole(ctx, req.(*SetUserRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// UserInfo_ServiceDesc is the grpc.ServiceDesc for UserInfo service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var UserInfo_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "auth.UserInfo",
-	HandlerType: (*UserInfoServer)(nil),
-	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUserRole",
-			Handler:    _UserInfo_GetUserRole_Handler,
+			MethodName: "Logout",
+			Handler:    _Auth_Logout_Handler,
 		},
 		{
-			MethodName: "SetUserRole",
-			Handler:    _UserInfo_SetUserRole_Handler,
+			MethodName: "RenewAccessToken",
+			Handler:    _Auth_RenewAccessToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
