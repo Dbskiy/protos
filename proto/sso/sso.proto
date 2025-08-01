@@ -12,6 +12,7 @@ service Auth {
 }
 
 //TODO: получение информации о пользователях, пользователе для будущей панели админа, удаление пользователя
+//TODO: сброс и смена пароля
 
 message RegisterRequest {
   string email = 1;
@@ -36,7 +37,6 @@ message LoginResponse {
 message LogoutRequest {
   string refresh_token = 1;
 }
-
 
 message LogoutResponse {
   bool succeeded = 1;

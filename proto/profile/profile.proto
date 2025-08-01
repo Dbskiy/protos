@@ -1,0 +1,57 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+package profile;
+
+option go_package = "dbskiy.profile.v1;profilev1";
+
+message ProfileData {
+  int64 user_id = 1;
+  string username = 2;
+  string gender = 3;
+  google.protobuf.Timestamp date_of_birth = 4;
+  string region = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+service Profile {
+  rpc CreateProfile (CreateProfileRequest) returns (CreateProfileResponse);
+  rpc GetProfile (GetProfileRequest) returns (GetProfileResponse);
+  rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc DeleteProfile (DeleteProfileRequest) returns (google.protobuf.Empty);
+}
+
+message CreateProfileRequest {
+  int64 user_id = 1;
+}
+
+message CreateProfileResponse {
+  string username = 1;
+  google.protobuf.Timestamp created_at = 2;
+}
+
+message GetProfileRequest {
+  int64 user_id = 1;
+}
+
+message GetProfileResponse {
+  ProfileData profile = 1;
+}
+
+message UpdateProfileRequest {
+  int64 user_id = 1;
+  optional string username = 2;
+  optional string gender = 3;
+  optional google.protobuf.Timestamp date_of_birth = 4;
+  optional string region = 5;
+}
+
+message UpdateProfileResponse {
+  ProfileData profile = 1;
+}
+
+message DeleteProfileRequest {
+  int64 user_id = 1;
+}
+
